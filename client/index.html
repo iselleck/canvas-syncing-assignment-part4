@@ -2,12 +2,74 @@
 <html lang="en">
 <head>
     <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script type="text/babel" >
         "use strict";
+
+let socket, canvas, ctx, sendBufferCanvas, sendBufferCtx;
+
+const connectSocket = (e) => {
+    socket = io.connect();
+    
+      setup();
+    
+    socket.on('connect', () => {
+        console.log('connecting')
+    });
+    
+    socket.on('draw', (data) => {
+        let image = new Image();
+
+        image.onload = () => {
+          ctx.save();
+            ctx.globalCompositeOperation = "source-over";
+            ctx.drawImage(image, data.x, data.y, data.width, data.height);
+            ctx.restore();
+        
+        };
+        
+        image.src = data.imgData;
+    });
+    
+    
+}
+
+const setup = () => {
+    sendBufferCanvas = document.createElement("canvas");
+    sendBufferCanvas.height = 200;
+    sendBufferCanvas.width = 200;
+    sendBufferCtx = sendBufferCanvas.getContext("2d");
+    
+      ctx.fillStyle = "#330000";
+    ctx.fillRect(100,100,150,150);
+    
+    sendBufferCtx.fillStyle = "#006600";
+    sendBufferCtx.fillRect(0,0,200,200);
+    
+    const data = {
+        x: 200,
+        y: 200,
+        height: 200,
+        width: 200,
+        imgData: sendBufferCanvas.toDataURL()
+    };
+
+    socket.emit('draw', data);
+}
+
+
+const init = () => {
+    canvas = document.getElementById("canvas");
+    ctx = canvas.getContext("2d");
+    connectSocket();      
+  
+};
+
+window.onload = init;
     
     </script>
 </head>
 <body>
-
+    <canvas id="canvas" width="500" height="500" style="display: block; border:1px solid #d3d3d3;"></canvas>
 </body>
 </html>
